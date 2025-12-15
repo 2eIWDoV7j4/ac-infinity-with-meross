@@ -1,0 +1,26 @@
+{
+  "name": "ac-infinity-with-meross",
+  "version": "1.0.0",
+  "description": "Utilities and dry-run automation for bridging AC Infinity humidity readings to a Meross humidifier via Homebridge.",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "npx tsc --pretty",
+    "test": "npm run build && node --test dist/tests/**/*.js",
+    "dry-run": "npm run build && node dist/dryRun.js",
+    "start": "npm run build && node dist/index.js"
+  },
+  "keywords": [
+    "homebridge",
+    "ac-infinity",
+    "meross",
+    "humidifier",
+    "automation"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "typescript": "^5.6.3"
+  }
+}
