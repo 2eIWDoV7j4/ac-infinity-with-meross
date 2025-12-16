@@ -184,4 +184,18 @@ The service logs each humidity reading and decision. It re-authenticates with Ho
 - Keep the container updated: `docker compose pull && docker compose up -d`.
 - Backup the `./homebridge` directory regularly; it contains configs and cached accessories.
 
+## 10. How the automation, Homebridge, and plugins work together
+
+- The `homebridge-acinfinity` and `homebridge-meross` npm plugins are baked into the Homebridge image and installed in `package.json` so the automation and UI are aligned on the same versions.
+- When the automation container starts, it authenticates against the Homebridge UI API, verifies that AC Infinity exposes a humidity characteristic, and that the Meross humidifier exposes an `On` characteristic before entering the loop.
+- Every poll cycle reads humidity via the AC Infinity accessory and issues an `On`/`Off` characteristic update to the Meross accessory when the thresholds are crossed.
+- You can run the loop locally without Docker using the same code path:
+
+```bash
+npm run start
+# HOMEBRIDGE_HOST=... HOMEBRIDGE_USERNAME=... HOMEBRIDGE_PASSWORD=... npm run start
+```
+
+Watch the console logs to confirm sensor reads and humidifier toggles. Any missing characteristic or accessory will throw a clear error before the loop continues.
+
 This setup lets AC Infinity readings drive the Meross humidifier automatically through Homebridge automations, keeping your tent at the desired humidity. The TypeScript dry-run gives you a transparent preview of how the control logic responds to changing humidity values.

@@ -58,6 +58,7 @@ export interface SimulationAction {
 export interface HomebridgeService {
   iid: number;
   type: string;
+  name?: string;
   characteristics: HomebridgeCharacteristic[];
 }
 
@@ -73,4 +74,7 @@ export interface HomebridgeAccessory {
   uuid: string;
   displayName: string;
   services: HomebridgeService[];
+  manufacturer?: string;
+  model?: string;
+  plugin?: string;
 }

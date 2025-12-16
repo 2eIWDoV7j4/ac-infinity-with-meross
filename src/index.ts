@@ -44,6 +44,9 @@ async function main(): Promise<void> {
   const pollIntervalMs = (env.pollIntervalSeconds ?? 60) * 1000;
   let state: DeviceState = { isOn: false, lastToggledAt: null };
 
+  await acInfinity.verifyHumiditySensor();
+  await meross.verifyPowerCharacteristic();
+
   logger.info(
     `Starting background loop. Target ${thresholds.targetHumidity}% ± ${thresholds.tolerance}%. Polling every ${pollIntervalMs / 1000}s.`
   );
