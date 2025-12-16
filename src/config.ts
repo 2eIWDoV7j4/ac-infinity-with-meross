@@ -4,6 +4,7 @@ export function loadEnv(): EnvConfig {
   const port = process.env.HOMEBRIDGE_PORT;
   const parsedPort = port ? parseInt(port, 10) : undefined;
   const pollIntervalSeconds = process.env.POLL_INTERVAL_SECONDS;
+  const parsedPollInterval = pollIntervalSeconds ? parseInt(pollIntervalSeconds, 10) : undefined;
   return {
     homebridgeHost: process.env.HOMEBRIDGE_HOST,
     homebridgePort: Number.isNaN(parsedPort) ? undefined : parsedPort,
@@ -15,7 +16,7 @@ export function loadEnv(): EnvConfig {
     acInfinityControllerId: process.env.AC_INFINITY_CONTROLLER_ID,
     acInfinityAccessToken: process.env.AC_INFINITY_ACCESS_TOKEN,
     acInfinityAccessoryName: process.env.AC_INFINITY_ACCESSORY_NAME,
-    pollIntervalSeconds: pollIntervalSeconds ? parseInt(pollIntervalSeconds, 10) : undefined,
+    pollIntervalSeconds: Number.isNaN(parsedPollInterval) ? undefined : parsedPollInterval,
     targetHumidity: process.env.TARGET_HUMIDITY ? parseFloat(process.env.TARGET_HUMIDITY) : undefined,
     tolerance: process.env.HUMIDITY_TOLERANCE ? parseFloat(process.env.HUMIDITY_TOLERANCE) : undefined
   };

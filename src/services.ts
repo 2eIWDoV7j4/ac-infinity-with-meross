@@ -146,6 +146,23 @@ export class MerossConnector {
     this.lastAccessory = accessory;
   }
 
+  async readPowerState(): Promise<boolean> {
+    const accessories = await this.client.listAccessories();
+    const accessory = this.pickAccessory(accessories);
+    const onCharacteristic = this.findPowerCharacteristic(accessory);
+
+    if (!onCharacteristic) {
+      throw new Error('Meross accessory reachable but missing On characteristic.');
+    }
+
+    const isOn = this.normalizeOnValue(onCharacteristic.characteristic.value);
+    this.logger.info(
+      `Meross humidifier state read: ${isOn ? 'ON' : 'OFF'} (${accessory.displayName}, ${accessory.plugin ?? 'unknown plugin'}).`
+    );
+    this.lastAccessory = accessory;
+    return isOn;
+  }
+
   private pickAccessory(accessories: HomebridgeAccessory[]): HomebridgeAccessory {
     const match = accessories.find((a) => {
       if (this.accessoryName && a.displayName === this.accessoryName) return true;
@@ -173,11 +190,9 @@ export class MerossConnector {
   async verifyPowerCharacteristic(): Promise<void> {
     const accessories = await this.client.listAccessories();
     const accessory = this.pickAccessory(accessories);
-    const hasOn = accessory.services.some((service) =>
-      service.characteristics.some((characteristic) => (characteristic.type ?? '').toLowerCase().includes('on'))
-    );
+    const onCharacteristic = this.findPowerCharacteristic(accessory);
 
-    if (!hasOn) {
+    if (!onCharacteristic) {
       throw new Error('Meross accessory reachable but missing On characteristic.');
     }
 
@@ -185,5 +200,25 @@ export class MerossConnector {
       `Verified Meross accessory ${accessory.displayName} via ${accessory.plugin ?? 'unknown plugin'} exposes power control.`
     );
     this.lastAccessory = accessory;
+  }
+
+  private findPowerCharacteristic(
+    accessory: HomebridgeAccessory
+  ): { characteristic: { value: unknown }; service: { type: string | undefined } } | undefined {
+    return accessory.services
+      .flatMap((service) => service.characteristics.map((characteristic) => ({ characteristic, service })))
+      .find(({ characteristic, service }) => {
+        const type = (characteristic.type ?? '').toLowerCase();
+        const serviceType = service.type?.toLowerCase() ?? '';
+        const name = (service as { name?: string }).name?.toLowerCase() ?? '';
+        return type.includes('on') || serviceType.includes('humidifier') || name.includes('humidifier');
+      });
+  }
+
+  private normalizeOnValue(value: unknown): boolean {
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'number') return value > 0;
+    if (typeof value === 'string') return value.toLowerCase() === 'true' || value === '1';
+    throw new Error(`Meross On characteristic is not readable: ${String(value)}`);
   }
 }

@@ -88,3 +88,26 @@ test('meross connector verifies power characteristic and sets power', async () =
   assert.equal(calls[0]?.uuid, 'meross-uuid');
   assert.equal(calls[0]?.value, true);
 });
+
+test('meross connector reads current power state and normalizes numeric values', async () => {
+  const client = {
+    listAccessories: async () => [
+      {
+        ...accessories[1],
+        services: [
+          {
+            iid: 3,
+            type: 'Fan',
+            name: 'Humidifier Fan',
+            characteristics: [{ iid: 4, type: 'On', value: 1 }]
+          }
+        ]
+      }
+    ]
+  } as unknown as any;
+
+  const connector = new MerossConnector(client, { logger: new Logger('test-meross') });
+  const isOn = await connector.readPowerState();
+
+  assert.equal(isOn, true);
+});

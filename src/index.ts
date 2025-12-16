@@ -42,10 +42,11 @@ async function main(): Promise<void> {
   };
 
   const pollIntervalMs = (env.pollIntervalSeconds ?? 60) * 1000;
-  let state: DeviceState = { isOn: false, lastToggledAt: null };
-
   await acInfinity.verifyHumiditySensor();
   await meross.verifyPowerCharacteristic();
+
+  const initialPowerState = await meross.readPowerState();
+  let state: DeviceState = { isOn: initialPowerState, lastToggledAt: null };
 
   logger.info(
     `Starting background loop. Target ${thresholds.targetHumidity}% ± ${thresholds.tolerance}%. Polling every ${pollIntervalMs / 1000}s.`
@@ -53,6 +54,9 @@ async function main(): Promise<void> {
 
   while (true) {
     try {
+      const isOn = await meross.readPowerState();
+      state = { ...state, isOn };
+
       const humidity = await acInfinity.readHumidity();
       const decision = automation.decideAction(humidity, thresholds, state);
       logger.info(`Decision: humidity=${humidity}% -> ${decision.action} (${decision.reason})`);
