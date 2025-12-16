@@ -170,6 +170,17 @@ docker compose logs -f automation
 
 The service logs each humidity reading and decision. It re-authenticates with Homebridge automatically if the UI token expires.
 
+## Development and testing
+
+Use the same code that powers the automation container when working locally:
+
+- Install dependencies once: `npm install`.
+- Run the TypeScript dry-run harness: `npm run dry-run` (optionally set `HOMEBRIDGE_*` env vars to label the logs).
+- Execute the full test suite and build: `npm test`.
+- Point the app at a real Homebridge instance for end-to-end validation: `HOMEBRIDGE_HOST=... HOMEBRIDGE_USERNAME=... HOMEBRIDGE_PASSWORD=... npm run start`.
+
+Each command emits structured logs so you can confirm Homebridge authentication, AC Infinity humidity reads, and Meross power toggles before deploying the Docker stack.
+
 ## 8. Troubleshooting
 
 - Confirm both plugins show accessories in the Homebridge UI under **Accessories**.
