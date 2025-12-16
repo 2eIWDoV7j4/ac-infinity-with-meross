@@ -13,7 +13,7 @@ const accessories: HomebridgeAccessory[] = [
     services: [
       {
         iid: 1,
-        type: 'HumiditySensor',
+        type: 'Humidity Sensor',
         name: 'Tent Humidity',
         characteristics: [
           { iid: 2, type: 'CurrentRelativeHumidity', value: 45 }
@@ -29,7 +29,8 @@ const accessories: HomebridgeAccessory[] = [
     services: [
       {
         iid: 3,
-        type: 'HumidifierDehumidifier',
+        type: 'Fan',
+        name: 'Humidifier Fan',
         characteristics: [
           { iid: 4, type: 'On', value: false }
         ]
@@ -47,6 +48,27 @@ test('ac infinity connector verifies humidity sensor and reads humidity', async 
   await connector.verifyHumiditySensor();
   const humidity = await connector.readHumidity();
   assert.equal(humidity, 45);
+});
+
+test('ac infinity connector surfaces missing humidity with exposeSensors guidance', async () => {
+  const brokenAccessories: HomebridgeAccessory[] = [
+    {
+      aid: 5,
+      uuid: 'ac-uuid',
+      displayName: 'AC Infinity Grow Tent',
+      plugin: 'homebridge-acinfinity',
+      services: [
+        { iid: 10, type: 'AccessoryInformation', characteristics: [] }
+      ]
+    }
+  ];
+
+  const client = {
+    listAccessories: async () => brokenAccessories
+  } as unknown as any;
+
+  const connector = new AcInfinityConnector(client, { logger: new Logger('test-ac') });
+  await assert.rejects(() => connector.verifyHumiditySensor(), /exposeSensors/);
 });
 
 test('meross connector verifies power characteristic and sets power', async () => {

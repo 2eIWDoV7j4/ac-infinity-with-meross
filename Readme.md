@@ -45,16 +45,17 @@ ins**. If you prefer to manage plugins manually, you can still install/update th
 
 ## 3. Configure AC Infinity plugin
 
-Use the UI config editor or edit `./homebridge/config.json` directly. Minimal example:
+Use the UI config editor or edit `./homebridge/config.json` directly. Minimal example (note the plugin alias is `ACInfinity` and `exposeSensors` must be true for humidity):
 
 ```json
 {
   "platforms": [
     {
-      "platform": "AcInfinity",
+      "platform": "ACInfinity",
       "email": "YOUR_AC_INFINITY_EMAIL",
       "password": "YOUR_AC_INFINITY_PASSWORD",
-      "pollingInterval": 60
+      "pollingInterval": 60,
+      "exposeSensors": true
     }
   ]
 }
@@ -63,6 +64,7 @@ Use the UI config editor or edit `./homebridge/config.json` directly. Minimal ex
 Notes:
 - Use a dedicated AC Infinity account for stability.
 - `pollingInterval` controls how often sensor values refresh (seconds).
+- `exposeSensors` is required so the plugin publishes the humidity sensor Homebridge will read.
 - After saving, restart Homebridge from the UI.
 
 ## 4. Configure Meross plugin
@@ -73,9 +75,10 @@ Add a new platform entry for Meross in the same `config.json`:
 {
   "platforms": [
     {
-      "platform": "AcInfinity",
+      "platform": "ACInfinity",
       "email": "YOUR_AC_INFINITY_EMAIL",
-      "password": "YOUR_AC_INFINITY_PASSWORD"
+      "password": "YOUR_AC_INFINITY_PASSWORD",
+      "exposeSensors": true
     },
     {
       "platform": "Meross",

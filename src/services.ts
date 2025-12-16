@@ -35,10 +35,13 @@ export class AcInfinityConnector {
 
     if (!humidityCharacteristic) {
       const available = sensor.services.map((service) => service.type).join(', ');
-      throw new Error(`Unable to find humidity characteristic on AC Infinity accessory (services: ${available})`);
+      throw new Error(
+        `Unable to find humidity characteristic on AC Infinity accessory (services: ${available}). ` +
+          'Ensure the homebridge-acinfinity plugin has `exposeSensors: true` so humidity is published.'
+      );
     }
 
-    const humidityValue = Number(humidityCharacteristic.characteristic.value);
+    const humidityValue = this.normalizeHumidityValue(humidityCharacteristic.characteristic.value);
     this.logger.info(
       `AC Infinity humidity read: ${humidityValue}% from ${sensor.displayName} (${sensor.plugin ?? 'unknown plugin'})`
     );
@@ -74,13 +77,30 @@ export class AcInfinityConnector {
       .flatMap((service) => service.characteristics.map((characteristic) => ({ characteristic, service })))
       .find(({ characteristic, service }) => {
         const serviceType = service.type?.toLowerCase() ?? '';
+        const name = (service as { name?: string }).name?.toLowerCase() ?? '';
         const characteristicType = characteristic.type?.toLowerCase() ?? '';
         return (
           characteristicType.includes('relativehumidity') ||
           serviceType.includes('humidity') ||
+          name.includes('humidity') ||
+          serviceType === 'humidity sensor' ||
           serviceType.includes('airquality')
         );
       });
+  }
+
+  private normalizeHumidityValue(value: unknown): number {
+    const numeric = Number(value);
+    if (Number.isNaN(numeric)) {
+      throw new Error(`AC Infinity humidity value is not numeric: ${String(value)}`);
+    }
+
+    if (numeric > 0 && numeric <= 1) {
+      this.logger.warn('Humidity value appears fractional; assuming percentage and scaling by 100.');
+      return numeric * 100;
+    }
+
+    return numeric;
   }
 
   async verifyHumiditySensor(): Promise<void> {
@@ -89,7 +109,10 @@ export class AcInfinityConnector {
     const humidity = this.findHumidity(sensor);
 
     if (!humidity) {
-      throw new Error('AC Infinity humidity sensor reachable but missing humidity characteristic.');
+      throw new Error(
+        'AC Infinity humidity sensor reachable but missing humidity characteristic. ' +
+          'Enable exposeSensors: true in the homebridge-acinfinity configuration.'
+      );
     }
 
     this.logger.info(
@@ -135,7 +158,11 @@ export class MerossConnector {
     if (pluginMatch) return pluginMatch;
 
     const fallback = accessories.find((a) =>
-      a.services.some((service) => service.type?.toLowerCase().includes('humidifier'))
+      a.services.some((service) => {
+        const type = service.type?.toLowerCase() ?? '';
+        const name = (service as { name?: string }).name?.toLowerCase() ?? '';
+        return type.includes('humidifier') || type.includes('fan') || name.includes('humidifier');
+      })
     );
     if (!fallback) {
       throw new Error('Meross humidifier accessory not found. Check plugin setup.');
