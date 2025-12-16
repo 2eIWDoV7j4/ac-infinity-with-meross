@@ -19,9 +19,7 @@ This guide explains how to bridge an AC Infinity grow tent controller and a Mero
 
 ## 1. Run Homebridge + automation in Docker
 
-Use the included `docker-compose.yml` to run both Homebridge and the background automation service side by side. The Homebridge
-container builds from `Dockerfile.homebridge`, which pre-installs both required plugins (`homebridge-acinfinity@1.3.6` and `homebridge-
-meross@10.8.1`) so they are available immediately after first boot:
+Use the included `docker-compose.yml` to run both Homebridge and the background automation service side by side. The Homebridge container builds from `Dockerfile.homebridge`, which pre-installs both required plugins (`homebridge-acinfinity@1.3.6` and `homebridge-meross@10.8.1`) so they are available immediately after first boot:
 
 ```bash
 docker compose up -d --build
@@ -30,15 +28,13 @@ docker compose up -d --build
 - Homebridge uses host networking for reliable mDNS/Bonjour discovery and stores data in `./homebridge`.
 - The automation container shares the host network so it can reach Homebridge at `http://localhost:8581`.
 - Both containers restart automatically unless stopped.
-- Rebuild (`docker compose build homebridge`) if you need newer plugin versions; the build step pins `npm install -g homebridge-
-  acinfinity@1.3.6 homebridge-meross@10.8.1` inside the Homebridge image.
+- Rebuild (`docker compose build homebridge`) if you need newer plugin versions; the build step pins `npm install -g homebridge-acinfinity@1.3.6 homebridge-meross@10.8.1` inside the Homebridge image.
 
 Access the UI at `http://<host-ip>:8581` (default credentials: admin/homebridge) and change the password after first login. Backup configs with `docker compose down` and the `./homebridge` volume.
 
 ## 2. Install required plugins
 
-The Docker build pre-installs the plugins. After Homebridge starts, open the UI and confirm both show as installed under **Plug
-ins**. If you prefer to manage plugins manually, you can still install/update them from the UI:
+The Docker build pre-installs the plugins. After Homebridge starts, open the UI and confirm both show as installed under **Plugins**. If you prefer to manage plugins manually, you can still install/update them from the UI:
 1. Go to **Plugins**.
 2. Install [`homebridge-acinfinity`](https://github.com/keithah/homebridge-acinfinity).
 3. Install [`homebridge-meross`](https://github.com/homebridge-plugins/homebridge-meross).
@@ -202,3 +198,4 @@ npm run start
 Watch the console logs to confirm sensor reads and humidifier toggles. Any missing characteristic or accessory will throw a clear error before the loop continues.
 
 This setup lets AC Infinity readings drive the Meross humidifier automatically through Homebridge automations, keeping your tent at the desired humidity. The TypeScript dry-run gives you a transparent preview of how the control logic responds to changing humidity values.
+
