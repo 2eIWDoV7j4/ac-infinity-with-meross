@@ -1,0 +1,6 @@
+FROM homebridge/homebridge:latest
+
+USER root
+RUN npm install -g homebridge-acinfinity@1.3.6 homebridge-meross@10.8.1
+
+USER homebridge
