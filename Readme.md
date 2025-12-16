@@ -20,8 +20,8 @@ This guide explains how to bridge an AC Infinity grow tent controller and a Mero
 ## 1. Run Homebridge + automation in Docker
 
 Use the included `docker-compose.yml` to run both Homebridge and the background automation service side by side. The Homebridge
-container builds from `Dockerfile.homebridge`, which pre-installs both required plugins (`homebridge-acinfinity` and `homebridge-
-meross`) so they are available immediately after first boot:
+container builds from `Dockerfile.homebridge`, which pre-installs both required plugins (`homebridge-acinfinity@1.3.6` and `homebridge-
+meross@10.8.1`) so they are available immediately after first boot:
 
 ```bash
 docker compose up -d --build
@@ -30,8 +30,8 @@ docker compose up -d --build
 - Homebridge uses host networking for reliable mDNS/Bonjour discovery and stores data in `./homebridge`.
 - The automation container shares the host network so it can reach Homebridge at `http://localhost:8581`.
 - Both containers restart automatically unless stopped.
-- Rebuild (`docker compose build homebridge`) if you need newer plugin versions; the build step runs `npm install -g homebridge-
-  acinfinity homebridge-meross` inside the Homebridge image.
+- Rebuild (`docker compose build homebridge`) if you need newer plugin versions; the build step pins `npm install -g homebridge-
+  acinfinity@1.3.6 homebridge-meross@10.8.1` inside the Homebridge image.
 
 Access the UI at `http://<host-ip>:8581` (default credentials: admin/homebridge) and change the password after first login. Backup configs with `docker compose down` and the `./homebridge` volume.
 
