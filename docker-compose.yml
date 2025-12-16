@@ -1,7 +1,9 @@
 version: "3"
 services:
   homebridge:
-    image: homebridge/homebridge:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.homebridge
     restart: unless-stopped
     network_mode: host
     environment:
