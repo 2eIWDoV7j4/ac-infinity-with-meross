@@ -5,7 +5,8 @@ services:
       context: .
       dockerfile: Dockerfile.homebridge
     restart: unless-stopped
-    network_mode: host
+    ports:
+      - "8581:8581"
     volumes:
       - ./homebridge:/var/lib/homebridge
     environment:
@@ -14,7 +15,6 @@ services:
     build: .
     depends_on:
       - homebridge
-    network_mode: host
     env_file:
       - .env
     restart: unless-stopped
