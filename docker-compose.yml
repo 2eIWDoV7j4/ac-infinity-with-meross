@@ -5,18 +5,16 @@ services:
       context: .
       dockerfile: Dockerfile.homebridge
     restart: unless-stopped
-    network_mode: host
+    ports:
+      - "8581:8581"
+    volumes:
+      - ./homebridge:/var/lib/homebridge
     environment:
       - TZ=UTC
-      - PGID=1000
-      - PUID=1000
-    volumes:
-      - ./homebridge:/homebridge
   automation:
     build: .
     depends_on:
       - homebridge
-    network_mode: host
     env_file:
       - .env
     restart: unless-stopped

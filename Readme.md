@@ -25,12 +25,12 @@ Use the included `docker-compose.yml` to run both Homebridge and the background 
 docker compose up -d --build
 ```
 
-- Homebridge uses host networking for reliable mDNS/Bonjour discovery and stores data in `./homebridge`.
-- The automation container shares the host network so it can reach Homebridge at `http://localhost:8581`.
+- Homebridge publishes port `8581` and stores data in `./homebridge` (mounted to `/var/lib/homebridge` inside the container).
+- The automation container reaches Homebridge at `http://homebridge:8581` when both services run in the same compose stack.
 - Both containers restart automatically unless stopped.
 - Rebuild (`docker compose build homebridge`) if you need newer plugin versions; the build step pins `npm install -g homebridge-acinfinity@1.3.6 homebridge-meross@10.8.1` inside the Homebridge image.
 
-Access the UI at `http://<host-ip>:8581` (default credentials: admin/homebridge) and change the password after first login. Backup configs with `docker compose down` and the `./homebridge` volume.
+Access the UI at `http://<host-ip>:8581` (default credentials: admin/homebridge) and change the password after first login. Backup configs with `docker compose down` and the `./homebridge` volume. On Docker Desktop (Mac/Windows), host networking is not supported; use the included `ports` mapping instead and visit `http://localhost:8581` from the host. The automation container can reach Homebridge at `http://homebridge:8581` by default when both services run in the same compose stack.
 
 ## 2. Install required plugins
 
@@ -187,6 +187,7 @@ Each command emits structured logs so you can confirm Homebridge authentication,
 - If AC Infinity data stops updating, regenerate its token by re-saving credentials and restarting.
 - For Meross, ensure UDP/mDNS is not blocked; host networking minimizes issues.
 - Check container logs with `docker compose logs -f homebridge` for plugin errors. For automation issues, use `docker compose logs -f automation`.
+- If you see `EACCES` errors creating `/var/lib/homebridge` or `dbus-daemon` permission errors, ensure the Homebridge volume is mounted to `/var/lib/homebridge` (see `docker-compose.yml`) and avoid overriding the container user with `PUID`/`PGID`, which prevents D-Bus from binding.
 
 ## 9. Security and maintenance
 
@@ -209,4 +210,3 @@ npm run start
 Watch the console logs to confirm sensor reads and humidifier toggles. Any missing characteristic or accessory will throw a clear error before the loop continues.
 
 This setup lets AC Infinity readings drive the Meross humidifier automatically through Homebridge automations, keeping your tent at the desired humidity. The TypeScript dry-run gives you a transparent preview of how the control logic responds to changing humidity values.
-
