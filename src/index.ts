@@ -1,11 +1,26 @@
 import { HumidityAutomation } from './automation';
 import { loadEnv, envSummary } from './config';
+import { runBackupFromEnv, scheduleBackupsFromEnv } from './backup';
 import { HomebridgeClient } from './homebridge';
 import { Logger } from './logger';
 import { AcInfinityConnector, MerossConnector } from './services';
 import { AutomationThresholds, DeviceState } from './types';
 
 const logger = new Logger('app');
+let stopRequested = false;
+let wakeLoop: (() => void) | undefined;
+
+function requestStop(signal: NodeJS.Signals): void {
+  if (stopRequested) return;
+  stopRequested = true;
+  logger.info(`${signal} received. Stopping automation loop and running backup...`);
+  if (wakeLoop) {
+    wakeLoop();
+  }
+}
+
+process.once('SIGTERM', () => requestStop('SIGTERM'));
+process.once('SIGINT', () => requestStop('SIGINT'));
 
 async function main(): Promise<void> {
   const env = loadEnv();
@@ -47,12 +62,13 @@ async function main(): Promise<void> {
 
   const initialPowerState = await meross.readPowerState();
   let state: DeviceState = { isOn: initialPowerState, lastToggledAt: null };
+  const cancelScheduledBackups = scheduleBackupsFromEnv(logger);
 
   logger.info(
     `Starting background loop. Target ${thresholds.targetHumidity}% ± ${thresholds.tolerance}%. Polling every ${pollIntervalMs / 1000}s.`
   );
 
-  while (true) {
+  while (!stopRequested) {
     try {
       const isOn = await meross.readPowerState();
       state = { ...state, isOn };
@@ -72,7 +88,22 @@ async function main(): Promise<void> {
       logger.error('Loop error:', error);
     }
 
-    await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+    await new Promise<void>((resolve) => {
+      wakeLoop = resolve;
+      setTimeout(() => {
+        wakeLoop = undefined;
+        resolve();
+      }, pollIntervalMs);
+    });
+  }
+
+  cancelScheduledBackups();
+  logger.info('Automation loop stopped. Triggering final backup before exit...');
+  try {
+    await runBackupFromEnv(logger);
+    logger.info('Final backup completed.');
+  } catch (error) {
+    logger.error('Failed to run final backup:', error);
   }
 }
 
