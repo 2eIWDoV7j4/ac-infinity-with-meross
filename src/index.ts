@@ -57,11 +57,8 @@ async function main(): Promise<void> {
   };
 
   const pollIntervalMs = (env.pollIntervalSeconds ?? 60) * 1000;
-  await acInfinity.verifyHumiditySensor();
-  await meross.verifyPowerCharacteristic();
-
-  const initialPowerState = await meross.readPowerState();
-  let state: DeviceState = { isOn: initialPowerState, lastToggledAt: null };
+  let ready = false;
+  let state: DeviceState = { isOn: false, lastToggledAt: null };
   const cancelScheduledBackups = scheduleBackupsFromEnv(logger);
 
   logger.info(
@@ -70,6 +67,16 @@ async function main(): Promise<void> {
 
   while (!stopRequested) {
     try {
+      if (!ready) {
+        logger.info('Attempting to verify Homebridge accessories before starting automation loop...');
+        await acInfinity.verifyHumiditySensor();
+        await meross.verifyPowerCharacteristic();
+        const initialPowerState = await meross.readPowerState();
+        state = { isOn: initialPowerState, lastToggledAt: null };
+        ready = true;
+        logger.info('Homebridge accessories verified; automation loop is live.');
+      }
+
       const isOn = await meross.readPowerState();
       state = { ...state, isOn };
 
@@ -85,7 +92,8 @@ async function main(): Promise<void> {
         state = { isOn: false, lastToggledAt: new Date() };
       }
     } catch (error) {
-      logger.error('Loop error:', error);
+      ready = false;
+      logger.warn('Homebridge not reachable yet or request failed; will retry after delay.', error);
     }
 
     await new Promise<void>((resolve) => {

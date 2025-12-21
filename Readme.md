@@ -170,6 +170,8 @@ docker compose logs -f automation
 
 The service logs each humidity reading and decision. It re-authenticates with Homebridge automatically if the UI token expires.
 
+- If Homebridge is unavailable (e.g., not yet paired or still booting), the automation container will log a warning and keep retrying instead of exiting. Once Homebridge responds and the accessories are verified, the loop begins and continues polling.
+
 ## Development and testing
 
 Use the same code that powers the automation container when working locally:
