@@ -170,6 +170,8 @@ docker compose logs -f automation
 
 The service logs each humidity reading and decision. It re-authenticates with Homebridge automatically if the UI token expires.
 
+- If Homebridge is unavailable (e.g., not yet paired or still booting), the automation container will log a warning and keep retrying instead of exiting. Once Homebridge responds and the accessories are verified, the loop begins and continues polling.
+
 ## Development and testing
 
 Use the same code that powers the automation container when working locally:
@@ -189,13 +191,35 @@ Each command emits structured logs so you can confirm Homebridge authentication,
 - Check container logs with `docker compose logs -f homebridge` for plugin errors. For automation issues, use `docker compose logs -f automation`.
 - If you see `EACCES` errors creating `/var/lib/homebridge` or `dbus-daemon` permission errors, ensure the Homebridge volume is mounted to `/var/lib/homebridge` (see `docker-compose.yml`) and avoid overriding the container user with `PUID`/`PGID`, which prevents D-Bus from binding.
 
-## 9. Security and maintenance
+## 9. Back up Homebridge configuration
+
+Homebridge includes a built-in backup/restore flow from the UI (**Settings → Backups** in recent releases). Use that for primary backups so you can export a single archive and restore it after upgrades.
+
+As a lightweight fallback, the repository now ships a backup helper that snapshots the mounted `./homebridge` directory into a git-ignored `./backups` folder. The automation container runs this helper automatically when it receives a stop signal (e.g., `docker compose down`), so a fresh backup is captured before Homebridge stops.
+
+```bash
+# One-off backup (writes to ./backups/homebridge-backup-<timestamp>)
+npm run backup
+
+# Optional: run every 30 minutes (keeps latest 5 backups by default)
+BACKUP_INTERVAL_MINUTES=30 npm run backup
+```
+
+Environment knobs:
+- `HOMEBRIDGE_DATA_DIR`: Source directory to back up (default: `./homebridge`).
+- `BACKUP_DIR`: Destination directory (default: `./backups`).
+- `BACKUP_RETENTION`: Number of backups to keep (default: 5).
+- `BACKUP_INTERVAL_MINUTES`: If set to a positive number, run periodically instead of only once.
+
+When stopping Homebridge/containers, a final backup is triggered automatically; you can also trigger one manually before upgrades to ensure `config.json` and cached accessories are saved.
+
+## 10. Security and maintenance
 
 - Change default UI password immediately.
 - Keep the container updated: `docker compose pull && docker compose up -d`.
 - Backup the `./homebridge` directory regularly; it contains configs and cached accessories.
 
-## 10. How the automation, Homebridge, and plugins work together
+## 11. How the automation, Homebridge, and plugins work together
 
 - The `homebridge-acinfinity` and `homebridge-meross` npm plugins are baked into the Homebridge image and installed in `package.json` so the automation and UI are aligned on the same versions.
 - When the automation container starts, it authenticates against the Homebridge UI API, verifies that AC Infinity exposes a humidity characteristic, and that the Meross humidifier exposes an `On` characteristic before entering the loop.

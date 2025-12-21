@@ -17,4 +17,10 @@ services:
       - homebridge
     env_file:
       - .env
+    environment:
+      - HOMEBRIDGE_DATA_DIR=/var/lib/homebridge
+      - BACKUP_DIR=/app/backups
     restart: unless-stopped
+    volumes:
+      - ./homebridge:/var/lib/homebridge
+      - ./backups:/app/backups

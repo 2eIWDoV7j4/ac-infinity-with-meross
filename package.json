@@ -8,7 +8,8 @@
     "build": "npx tsc --pretty",
     "test": "npm run build && node --test dist/tests/*.js",
     "dry-run": "npm run build && node dist/dryRun.js",
-    "start": "npm run build && node dist/index.js"
+    "start": "npm run build && node dist/index.js",
+    "backup": "npm run build && node dist/backup.js"
   },
   "keywords": [
     "homebridge",
